@@ -9903,7 +9903,10 @@ op_db: List[OpInfo] = [
                    'TestCommon', 'test_variant_consistency_eager', device_type='cuda'),
                DecorateInfo(
                    toleranceOverride({torch.complex64: tol(atol=1e-05, rtol=1.2e-03)}),
-                   'TestMathBits', 'test_conj_view', device_type='cuda')],
+                   'TestMathBits', 'test_conj_view', device_type='cuda'),
+               # Decomp does not have enough precision for bfloat16
+               DecorateInfo(
+                   unittest.skip("Skipped!"), 'TestDecomp', 'test_comprehensive', dtypes=(torch.bfloat16,))],
            sample_inputs_func=sample_inputs_baddbmm,
            skips=(
                # Issue with conj and torch dispatch, see https://github.com/pytorch/pytorch/issues/82479
