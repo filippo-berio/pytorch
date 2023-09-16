@@ -3907,6 +3907,11 @@ def multilabel_margin_loss_forward(
     return z, is_target
 
 
+@register_decomposition([aten.copy])
+def copy(self: Tensor, src: Tensor, non_blocking: bool) -> Tensor:
+    # aten::copy(Tensor self, Tensor src, bool non_blocking=False) -> Tensor
+    return self._copy(_to_copy(x=src, non_blocking=non_blocking))
+
 # scaled_dot_product_attention used to be decomposed in pre-autograd, given that
 # it calls _scaled_dot_product_attention_math and
 # _scaled_dot_product_attention_math only has a CompositeImplicitAutograd

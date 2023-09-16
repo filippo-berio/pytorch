@@ -228,6 +228,7 @@ def core_aten_decompositions() -> Dict[torch._ops.OperatorBase, Callable]:
             aten.celu,
             aten.celu_,
             aten.col2im,
+            aten.copy,
             aten.count_nonzero,
             aten.cudnn_batch_norm,
             aten.cudnn_batch_norm_backward,
