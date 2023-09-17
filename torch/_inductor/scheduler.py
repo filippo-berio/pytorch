@@ -1485,6 +1485,40 @@ class Scheduler:
         if node2.get_names() & node1.recursive_predecessors:
             return False  # node2 must go before node1
 
+        # If node1 is a FusedSchedulerNode which assumes already has fused several scheduler nodes,
+        # we only check the last scheduler node among the FusedSchedulerNode.
+        check_atomic_add_mutation_node1 = (
+            node1.get_nodes()[-1] if isinstance(node1, FusedSchedulerNode) else node1
+        )
+        if (
+            isinstance(check_atomic_add_mutation_node1, SchedulerNode)
+            and isinstance(node2, SchedulerNode)
+            and isinstance(check_atomic_add_mutation_node1._body, ir.LoopBody)
+            and isinstance(node2._body, ir.LoopBody)
+        ):
+            # Fix Issue: https://github.com/pytorch/pytorch/issues/108963
+            # Disable the fusion of node1 and node2, if:
+            # * Any buffer used by node2 is a mutation of node1
+            # * Store Buffer of node1 is produced by mode of atomic_add
+
+            def _store_as_atomic_add(check_node):
+                for node in check_node._body.get_nodes():
+                    if node.op == "call_method" and node.target == "store":
+                        # Check the mode parameter of store node is atomic_add
+                        if (
+                            "mode" in node.kwargs
+                            and node.kwargs["mode"] == "atomic_add"
+                        ) or (len(node.args) == 5 and node.args[4] == "atomic_add"):
+                            return True
+                return False
+
+            for key in node2._body.reads_name2expr.keys():
+                if (
+                    key in check_atomic_add_mutation_node1.get_mutations()
+                    and _store_as_atomic_add(check_atomic_add_mutation_node1)
+                ):
+                    return False
+
         if node2.is_template():
             return False  # only epilogues
         if node1.is_template() and (
