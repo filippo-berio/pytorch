@@ -72,13 +72,15 @@ class Linear(Module):
     out_features: int
     weight: Tensor
 
-    def __init__(self, in_features: int, out_features: int, bias: bool = True) -> None:
-        super(Linear, self).__init__()
+    def __init__(self, in_features: int, out_features: int, bias: bool = True,
+                 device=None, dtype=None) -> None:
+        factory_kwargs = {'device': device, 'dtype': dtype}
+        super().__init__()
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = Parameter(torch.Tensor(out_features, in_features))
+        self.weight = Parameter(torch.empty((out_features, in_features), **factory_kwargs))
         if bias:
-            self.bias = Parameter(torch.Tensor(out_features))
+            self.bias = Parameter(torch.empty(out_features, **factory_kwargs))
         else:
             self.register_parameter('bias', None)
         self.reset_parameters()
